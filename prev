@@ -1,0 +1,73 @@
+var role_miner = require("role.miner");
+var role_builder = require('role.builder');
+
+
+    
+    
+    // Temp codes //
+    let ss = Game.getObjectById("5bbcab3d9099fc012e63327c");
+    let cc = Game.getObjectById("65e055fb646ee6362c957a18");
+    if (cc) {
+        cc.harvest(ss);
+        cc.moveTo(ss);
+        cc.upgradeController(cc.room.controller);
+    }
+    
+    ["miner_A", "miner_B"].forEach(function(name) {
+        let creeps = _.filter(Game.creeps, (creep) => creep.name == name);
+        if (creeps.length < 1) {
+            let resp = Game.spawns["Spawn1"].spawnCreep([WORK, WORK, WORK, CARRY], name,
+                {
+                    memory: {role: "miner"},
+                    directions: name == "miner_A" ? [BOTTOM_LEFT] : [BOTTOM],
+                });
+            console.log("Spawning new miner: " + name + " code: " + resp);
+        }
+    });
+    
+    var builder = _.filter(Game.creeps, (creep) => creep.memory.role == "builder");
+    if (builder.length < 3) {
+        let name = "Creep_" + Game.time;
+        console.log("Spawning new builder: " + name);
+        Game.spawns["Spawn1"].spawnCreep([WORK, CARRY, MOVE], name,
+            {memory: {role: "builder"}});
+    }
+    
+    if(Game.spawns["Spawn1"].spawning) {
+        var spawningCreep = Game.creeps[Game.spawns["Spawn1"].spawning.name];
+        Game.spawns["Spawn1"].room.visual.text(
+            "🛠" + spawningCreep.memory.role,
+            Game.spawns["Spawn1"].pos.x + 1,
+            Game.spawns["Spawn1"].pos.y,
+            {align: "left", opacity: 0.8});
+    }
+
+    for (var name in Game.creeps) {
+        var creep = Game.creeps[name];
+        if (creep.memory.role == "miner") {
+            role_miner.run(creep);
+        }
+        if (creep.memory.role == "builder") {
+            role_builder.run(creep);
+        }
+    }
+    
+    
+    if (Game.spawns["Spawn1"].room.find(FIND_SOURCES)[0].ticksToRegeneration == undefined) {
+        console.log("================================");
+        console.log(Game.spawns["Spawn1"].room.energyAvailable + " / " + Game.spawns["Spawn1"].room.energyCapacityAvailable);
+        
+        console.log("================================");
+    }
+    
+    
+    
+    
+    
+    // garbage collect
+    for (let name in Memory.creeps) {
+        if (!Game.creeps[name]) {
+            delete Memory.creeps[name];
+            console.log("Clearing non-existing creep memory:", name);
+        }
+    }
